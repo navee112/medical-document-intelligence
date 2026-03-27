@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+pydantic
+python-dotenv
+httpx
+python-multipart
+numpy
+scikit-learn
+langchain
+langgraph
+pypdf
+pdfplumber
+pypdfium2
+pytesseract
+pytest

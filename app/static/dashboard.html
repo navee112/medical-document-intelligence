@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Patient Intelligence Dashboard</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --ink: #10243f;
+      --muted: #5f6f85;
+      --accent: #1b6cff;
+      --accent-2: #0ea5a6;
+      --line: #dde5f0;
+      --good: #0f9d58;
+      --warn: #b26a00;
+      --danger: #b42318;
+      --shadow: 0 10px 40px rgba(16, 36, 63, 0.08);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", "IBM Plex Sans", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(27,108,255,0.10), transparent 40%),
+        radial-gradient(circle at 90% 0%, rgba(14,165,166,0.12), transparent 45%),
+        var(--bg);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 1180px;
+      margin: 24px auto 48px;
+      padding: 0 16px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #0b3b99, #1b6cff 55%, #1aa5a2);
+      color: white;
+      border-radius: 20px;
+      padding: 24px 26px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero:after {
+      content: "";
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      right: -60px;
+      top: -60px;
+      background: rgba(255,255,255,0.16);
+      border-radius: 50%;
+    }
+
+    .hero h1 { margin: 0 0 6px; font-size: 28px; letter-spacing: 0.2px; }
+    .hero p { margin: 0; opacity: 0.95; }
+    .hero .status {
+      margin-top: 12px;
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.16);
+      font-size: 13px;
+    }
+
+    .hero .api-row {
+      margin-top: 12px;
+      max-width: 620px;
+    }
+
+    .hero .api-row input {
+      background: rgba(255, 255, 255, 0.95);
+      color: #0f223b;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+    }
+
+    .hero .api-row button {
+      width: 120px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      animation: rise .35s ease-out both;
+    }
+
+    @keyframes rise {
+      from { transform: translateY(8px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    h2, h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .muted { color: var(--muted); }
+    .row { display: flex; gap: 8px; }
+    .col { display: flex; flex-direction: column; gap: 8px; }
+    .sp { margin-top: 14px; }
+
+    input, select, textarea, button {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      padding: 10px 11px;
+      font: inherit;
+      color: var(--ink);
+      background: white;
+    }
+
+    textarea {
+      min-height: 86px;
+      resize: vertical;
+      line-height: 1.4;
+    }
+
+    button {
+      border: none;
+      color: white;
+      background: var(--accent);
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform .12s ease, opacity .12s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+    .btn-alt { background: var(--accent-2); }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .chip {
+      background: #edf3ff;
+      border: 1px solid #d7e5ff;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      color: #234a84;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 10px 0 2px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px;
+      background: #fbfdff;
+    }
+    .metric .k { font-size: 24px; font-weight: 700; margin: 2px 0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 8px 6px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    th { color: var(--muted); font-weight: 600; }
+
+    .report-block {
+      border-left: 4px solid var(--accent);
+      background: #f8fbff;
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    .report-block h4 { margin: 0 0 6px; }
+    .report-item { margin-bottom: 9px; }
+    .cites { color: #315e9d; font-size: 12px; }
+    .error { color: var(--danger); }
+    .warn { color: var(--warn); }
+    .ok { color: var(--good); }
+    .tiny { font-size: 12px; color: var(--muted); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    @media (max-width: 1000px) {
+      .grid { grid-template-columns: 1fr; }
+      .hero .api-row button { width: 100%; }
+      .row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>Patient Intelligence Dashboard</h1>
+      <p>Upload patient-specific files, run cross-document synthesis, and review grounded citations.</p>
+      <div id="apiStatus" class="status">Checking API...</div>
+
+      <div class="api-row">
+        <div class="tiny" style="color: rgba(255,255,255,0.9); margin-bottom: 4px;">API Base URL (optional)</div>
+        <div class="row">
+          <input id="apiBaseInput" placeholder="http://127.0.0.1:8000">
+          <button id="saveApiBaseBtn" class="btn-alt">Apply</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>Patient Workspace</h2>
+
+        <div class="col">
+          <label for="patientSelect">Select Patient</label>
+          <select id="patientSelect"></select>
+          <button id="refreshPatientsBtn" class="btn-alt">Refresh Patients</button>
+        </div>
+
+        <div class="sp col">
+          <label for="newPatientInput">Create New Patient</label>
+          <div class="row">
+            <input id="newPatientInput" placeholder="e.g. blood_patient2">
+            <button id="createPatientBtn">Create</button>
+          </div>
+        </div>
+
+        <div class="metric-grid">
+          <div class="metric">
+            <div class="tiny">Total Patients</div>
+            <div id="metricPatients" class="k">0</div>
+          </div>
+          <div class="metric">
+            <div class="tiny">Selected Docs</div>
+            <div id="metricDocs" class="k">0</div>
+          </div>
+        </div>
+
+        <div class="sp col">
+          <label for="fileInput">Upload Files To Selected Patient</label>
+          <input id="fileInput" type="file" multiple>
+          <button id="uploadBtn">Upload</button>
+          <div class="tiny">PDF/TXT and other files are accepted. Duplicate names are auto-versioned.</div>
+        </div>
+
+        <div class="sp">
+          <h3>Documents</h3>
+          <div id="docsWrap" class="tiny muted">No patient selected.</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Intelligence Analytics</h2>
+
+        <div class="col">
+          <label for="objectiveInput">Objective</label>
+          <textarea id="objectiveInput">Produce an executive intelligence report with grounded citations. Prioritize clinical abnormalities, trends over time, and follow-up risks. Ignore legal disclaimers and administrative boilerplate.</textarea>
+
+          <div class="row">
+            <div class="col" style="flex:1">
+              <label for="topkInput">Top K Chunks</label>
+              <input id="topkInput" type="number" min="3" max="40" value="12">
+            </div>
+            <div class="col" style="flex:1; justify-content:end;">
+              <label>&nbsp;</label>
+              <button id="runReportBtn">Run Report</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="reportArea" class="sp">
+          <div class="muted">Run a report to see executive summary, findings, and cross-document insights.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const patientSelect = document.getElementById("patientSelect");
+    const metricPatients = document.getElementById("metricPatients");
+    const metricDocs = document.getElementById("metricDocs");
+    const docsWrap = document.getElementById("docsWrap");
+    const reportArea = document.getElementById("reportArea");
+    const apiStatus = document.getElementById("apiStatus");
+    const apiBaseInput = document.getElementById("apiBaseInput");
+
+    let currentPatient = "";
+
+    function getApiBase() {
+      return (localStorage.getItem("patient_dashboard_api_base") || "").trim();
+    }
+
+    function setApiBase(value) {
+      localStorage.setItem("patient_dashboard_api_base", value.trim());
+    }
+
+    function resolveUrl(path) {
+      const base = getApiBase();
+      if (!base) return path;
+      return `${base.replace(/\/$/, "")}${path}`;
+    }
+
+    async function api(path, options = {}) {
+      const url = resolveUrl(path);
+      const resp = await fetch(url, options);
+      const text = await resp.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+
+      if (!resp.ok) {
+        const detailRaw = (data && data.detail) ? data.detail : (typeof data === "string" ? data : JSON.stringify(data));
+        const detail = String(detailRaw || "Request failed").replace(/\s+/g, " ").slice(0, 220);
+        throw new Error(detail || `Request failed (${resp.status})`);
+      }
+      return data;
+    }
+
+    function setApiStatus(text, cssClass) {
+      apiStatus.textContent = text;
+      apiStatus.className = `status ${cssClass || ""}`;
+    }
+
+    async function checkHealth() {
+      let health = null;
+      try {
+        health = await api("/health");
+      } catch {
+        try {
+          health = await api("/api/health");
+        } catch (err) {
+          setApiStatus(`API unavailable: ${err.message}`, "error");
+          return;
+        }
+      }
+
+      if (!health || health.status !== "ok") {
+        setApiStatus("API returned unexpected health payload", "warn");
+        return;
+      }
+
+      const llm = health.llm || {};
+      const provider = llm.provider || "unknown";
+      const model = llm.model || "unknown";
+      const configured = llm.configured ? "configured" : "not configured";
+      setApiStatus(`API online | ${provider}:${model} (${configured})`, "ok");
+    }
+
+    function fmtBytes(bytes) {
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    }
+
+    async function loadPatients(preferredPatient = "") {
+      const patients = await api("/patients");
+      metricPatients.textContent = String(patients.length);
+
+      patientSelect.innerHTML = "";
+      if (!patients.length) {
+        patientSelect.innerHTML = `<option value="">No patient folders yet</option>`;
+        currentPatient = "";
+        docsWrap.innerHTML = `<span class="muted">Create a patient folder first.</span>`;
+        metricDocs.textContent = "0";
+        return;
+      }
+
+      for (const p of patients) {
+        const option = document.createElement("option");
+        option.value = p.patient_id;
+        option.textContent = `${p.patient_id} (${p.documents_count} docs)`;
+        patientSelect.appendChild(option);
+      }
+
+      const selected = preferredPatient && patients.some(p => p.patient_id === preferredPatient)
+        ? preferredPatient
+        : patientSelect.value;
+      patientSelect.value = selected;
+      currentPatient = selected;
+      await loadDocuments();
+    }
+
+    async function createPatient() {
+      const input = document.getElementById("newPatientInput");
+      const raw = input.value.trim();
+      if (!raw) return;
+
+      try {
+        const data = await api("/patients", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ patient_id: raw }),
+        });
+        input.value = "";
+        await loadPatients(data.patient_id);
+      } catch (err) {
+        alert(`Create patient failed: ${err.message}`);
+      }
+    }
+
+    async function loadDocuments() {
+      if (!currentPatient) {
+        docsWrap.innerHTML = `<span class="muted">No patient selected.</span>`;
+        metricDocs.textContent = "0";
+        return;
+      }
+
+      try {
+        const docs = await api(`/patients/${encodeURIComponent(currentPatient)}/documents`);
+        metricDocs.textContent = String(docs.length);
+
+        if (!docs.length) {
+          docsWrap.innerHTML = `<span class="muted">No documents yet for ${currentPatient}.</span>`;
+          return;
+        }
+
+        const rows = docs.map(doc => `
+          <tr>
+            <td class="mono">${doc.filename}</td>
+            <td>${fmtBytes(doc.size_bytes)}</td>
+            <td>${new Date(doc.modified_at).toLocaleString()}</td>
+          </tr>
+        `).join("");
+
+        docsWrap.innerHTML = `
+          <table>
+            <thead>
+              <tr><th>Filename</th><th>Size</th><th>Modified</th></tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+      } catch (err) {
+        docsWrap.innerHTML = `<span class="error">Failed to load documents: ${err.message}</span>`;
+      }
+    }
+
+    async function uploadFiles() {
+      if (!currentPatient) {
+        alert("Select a patient first.");
+        return;
+      }
+
+      const fileInput = document.getElementById("fileInput");
+      const files = fileInput.files;
+      if (!files || files.length === 0) {
+        alert("Choose one or more files first.");
+        return;
+      }
+
+      const form = new FormData();
+      for (const file of files) {
+        form.append("files", file);
+      }
+
+      try {
+        const result = await api(`/patients/${encodeURIComponent(currentPatient)}/upload`, {
+          method: "POST",
+          body: form,
+        });
+        fileInput.value = "";
+        await loadPatients(result.patient_id);
+        alert(`Uploaded ${result.saved_files.length} file(s).`);
+      } catch (err) {
+        alert(`Upload failed: ${err.message}`);
+      }
+    }
+
+    function renderReport(data) {
+      const findingsHtml = (data.key_findings || []).map(item => `
+        <div class="report-item">
+          <div>${item.statement}</div>
+          <div class="cites">Citations: ${(item.citations || []).join(", ") || "None"}</div>
+        </div>
+      `).join("");
+
+      const insightsHtml = (data.cross_document_insights || []).map(item => `
+        <div class="report-item">
+          <div>${item.statement}</div>
+          <div class="cites">Citations: ${(item.citations || []).join(", ") || "None"}</div>
+        </div>
+      `).join("");
+
+      const warningsHtml = (data.warnings || []).length
+        ? `<div class="warn">Warnings: ${(data.warnings || []).join(" | ")}</div>`
+        : `<div class="ok">No warnings.</div>`;
+
+      reportArea.innerHTML = `
+        <div class="report-block">
+          <h4>Executive Summary</h4>
+          <div>${data.executive_summary || "-"}</div>
+        </div>
+        <div class="report-block">
+          <h4>Key Findings</h4>
+          ${findingsHtml || '<div class="muted">No findings returned.</div>'}
+        </div>
+        <div class="report-block">
+          <h4>Cross-Document Insights</h4>
+          ${insightsHtml || '<div class="muted">No cross-document insights returned.</div>'}
+        </div>
+        <div class="chips">
+          ${(data.sources_used || []).map(src => `<span class="chip">${src}</span>`).join("")}
+        </div>
+        <div class="sp tiny">Grounded: <strong>${data.grounded ? "true" : "false"}</strong></div>
+        <div class="sp tiny">${warningsHtml}</div>
+      `;
+    }
+
+    async function runReport() {
+      if (!currentPatient) {
+        alert("Select a patient first.");
+        return;
+      }
+
+      const runBtn = document.getElementById("runReportBtn");
+      runBtn.disabled = true;
+      runBtn.textContent = "Running...";
+
+      try {
+        const objective = document.getElementById("objectiveInput").value.trim();
+        const topK = Number(document.getElementById("topkInput").value || 12);
+        const data = await api(`/patients/${encodeURIComponent(currentPatient)}/report`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ objective, top_k_chunks: topK }),
+        });
+        renderReport(data);
+      } catch (err) {
+        reportArea.innerHTML = `<div class="error">Report failed: ${err.message}</div>`;
+      } finally {
+        runBtn.disabled = false;
+        runBtn.textContent = "Run Report";
+      }
+    }
+
+    function applyApiBase() {
+      const value = apiBaseInput.value.trim();
+      setApiBase(value);
+      checkHealth();
+      loadPatients(currentPatient).catch((err) => {
+        docsWrap.innerHTML = `<span class="error">Failed to initialize: ${err.message}</span>`;
+      });
+    }
+
+    patientSelect.addEventListener("change", async () => {
+      currentPatient = patientSelect.value;
+      await loadDocuments();
+    });
+
+    document.getElementById("refreshPatientsBtn").addEventListener("click", () => loadPatients(currentPatient));
+    document.getElementById("createPatientBtn").addEventListener("click", createPatient);
+    document.getElementById("uploadBtn").addEventListener("click", uploadFiles);
+    document.getElementById("runReportBtn").addEventListener("click", runReport);
+    document.getElementById("saveApiBaseBtn").addEventListener("click", applyApiBase);
+
+    (async function boot() {
+      apiBaseInput.value = getApiBase();
+      await checkHealth();
+      try {
+        await loadPatients("blood_patient1");
+      } catch (err) {
+        docsWrap.innerHTML = `<span class="error">Failed to initialize: ${err.message}</span>`;
+      }
+    })();
+  </script>
+</body>
+</html>
